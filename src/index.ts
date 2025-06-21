@@ -1,23 +1,24 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import connectDB from './config/db';
+import path from 'path';
+import bodyParser from 'body-parser';
+
+// Route imports - adjust paths according to your actual file structure
 import authRoutes from './routes/auth';
-import postRoutes from './routes/posts';
+import postRoutes from './routes/post';
 
-dotenv.config();
-
-// Validate required environment variables
-const requiredEnvVars = ['MONGO_URI', 'JWT_SECRET', 'ADMIN_USERS', 'ADMIN_PASSWORD_HASH'];
-for (const envVar of requiredEnvVars) {
-  if (!process.env[envVar]) {
-    console.error(`Error: Missing required environment variable ${envVar}`);
-    process.exit(1);
-  }
-}
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3001;
+const MONGO_URI = process.env.MONGO_URI || '';
+
+if (!MONGO_URI) {
+  console.error('MONGO_URI environment variable is not set');
+  process.exit(1);
+}
 
 // Middleware
 app.use(cors({
@@ -25,21 +26,23 @@ app.use(cors({
     'http://localhost:5173',
     'https://eliza-trader-pro.netlify.app'
   ],
-  credentials: true
+  credentials: true,
 }));
-app.use(express.json());
+app.use(bodyParser.json());
 
-// Connect to Database
-connectDB().catch(err => {
-  console.error('Database connection failed', err);
-  process.exit(1);
-});
+// Database Connection
+mongoose.connect(MONGO_URI)
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => {
+    console.error('MongoDB connection error:', err);
+    process.exit(1);
+  });
 
-// Routes
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
 
-// Health Check
+// Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'OK',
@@ -47,12 +50,18 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Root endpoint
+app.get('/', (req, res) => {
+  res.send('Backend is running!');
+});
+
 // Error handling middleware
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Internal server error' });
 });
 
+// Start server
 const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
@@ -62,3 +71,5 @@ process.on('unhandledRejection', (err: Error) => {
   console.error('Unhandled Rejection:', err);
   server.close(() => process.exit(1));
 });
+
+export default app;
