@@ -24,7 +24,8 @@ if (!MONGO_URI) {
 app.use(cors({
   origin: [
     'http://localhost:5173',
-    'https://eliza-trader-pro.netlify.app'
+    'https://eliza-trader-pro.netlify.app',
+    'https://eliza-trader-pro.onrender.com'
   ],
   credentials: true,
 }));
