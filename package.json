@@ -4,9 +4,9 @@
   "description": "API for Eliza Trader Pro",
   "main": "dist/index.js",
   "scripts": {
+    "build": "tsc",
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
-    "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
